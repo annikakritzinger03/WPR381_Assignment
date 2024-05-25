@@ -1,0 +1,16 @@
+{
+  "name": "wpr381_assignment",
+  "version": "1.0.0",
+  "description": "This application aims to provide the user with the ability to run a look-up request via the terminal and then the requested data: “artist(s), song, preview link, and album.” is returned and displayed  to the user.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "spotify-web-api-node": "^5.0.2"
+  }
+}

@@ -1,161 +1,165 @@
 /*
-    WPR381 Assignment 1 Group V12:
-        - Annika Kritzinger (577322)
-        - Nathan Evans (577806)
-        - Thabang Mahlangu (576277)
+  WPR381 Assignment 1 Group V12:
+    - Annika Kritzinger (577322)
+    - Nathan Evans (577806)
+    - Thabang Mahlangu (576277)
 */
 
-//Nathan Evans Menu creation
-//
-//
-//
-const readline = require('readline'); //The importing of the built-in module in Node.js called "readline"//This enables reading of input from the terminal
+//The importing of the built-in module in Node.js called "readline"//This enables reading of input from the terminal
+const readLine = require('readline');
 
-const read = readline.createInterface({ // an instance of an interface is created whereby input can be read and output can be written
-    input: process.stdin, //Enables input to be received via the stream and to be read from the terminal, entered by the user
-    output: process.stdout //It does the opposite of 'process.stdin' and  deals with the output to the terminal
-})
+//Creating an instance interface whereby input can be read and output can be written
+const rl = readLine.createInterface({ 
+    input: process.stdin,     //Enables input to be received via the stream and to be read from the terminal, entered by the user
+    output: process.stdout    //It does the opposite of 'process.stdin' and  deals with the output to the terminal
+});
 
-//menu display is created below where the (` `) is used for the creation of multi-line strings which is all assigned to a constant variable that will be displayed later on
-//Menu displays the option to go to Twitter, Spotify and to exit the program
-const menu = ` 
-    1. Go to Twitter
-    2. Go to Spotify
-    3. Exit Program
-`;
-//the menu displayed when the (1) is clicked by the user
-//this menu has the options of taking the user back to the main menu or to exit the program
-const twitterMenu = `
-    1. Go back to the welcoming menu
-    2. Close the program
-`;
-//the menu displayed when the (2) is clicked by the user
-const spotifyMenu = `
-    1. Go back to the welcoming menu
-    2. Close the program
-`;
+/*
+    Storing credentials in .env files is much more secure than placing them as variables or constants in the code.
+    In this case, the client ID and client secret is stored in the .env file
+*/
 
-const showMenu = () =>{ //arrow function is assigned to the constant variable 'showMenu'
-    console.log("\nWelcome!\nPlease select an option below by pressing (1), (2), or (3):"); //Text displayed before menu displayed
-    console.log(menu); //menu is displayed
-    read.question('Please enter your option here: ', (answer) => { //user is pormpted to enter their choice and only after the user entered their choice, the callback function will execute
-        handleMenuSelection(answer);//function is called and is responsible for processing the response and outputting the desired resulting result
+//Include the dotenv module
+require('dotenv').config();
+//Include the SpotifyWebApi module
+const spotifyWebApi = require('spotify-web-api-node');
+
+//Create an instance of spotifyWebApi
+const spotify = new spotifyWebApi({
+    clientId: process.env.SPOTIFY_CLIENT_ID,            //Retrieve client ID from the .env file
+    clientSecret: process.env.SPOTIFY_CLIENT_SECRET     //Retrieve client secret from the .env file
+});
+
+console.clear();
+DisplayMenu();
+
+//Menu displays the option to go to, Spotify and to exit the program
+function DisplayMenu(){
+    console.log("----------Menu----------\n",           //Menu text to display in terminal
+      "\t1. Perform a Spoitfy look-up for a song\n",    //Prompt text to run Spotify
+      "\t2. Exit Program",                              //Prompt text to exit the program
+    );
+    
+    //Processing user feedback and calling the relevant function
+    rl.question("Please enter 1 or 2: ", async option => {
+        switch(Number(option)){
+            case 1:
+                console.clear();
+                await SearchSongInSpotify();
+                ReturnToMenu();
+                break;
+            case 2:
+                Exit(); //Function to exit
+                return; 
+            default:
+                console.clear();
+                //Invalid option will run to display the error message and enable the user to try again.
+                console.log(`\"${option}\" is not valid option...\nPlease enter a number that is either 1 or 2.`);
+                DisplayMenu();  //Displays the menu again
+                return;
+        }
     });
-};
+}
 
-const showTwitterMenu = () => { //menu inside Twitter selection to be displayed
-    console.log("\n\nPlease select an option below by pressing (1) or (2):");
-    console.log(twitterMenu);
-    read.question('Please enter your option here: ', (answer) => {
-      handleTwitterMenuSelection(answer);
-    });
-};
-  
-const showSpotifyMenu = () => { //menu selection iside the Spotify selection to be displayed
-    console.log("\n\nPlease select an option below by pressing (1) or (2):");
-    console.log(spotifyMenu);
-    read.question('Please enter your option here: ', (answer) => {
-        handleSpotifyMenuSelection(answer);
-    });
-};
+//Option to return to menu or to exit the program 
+function ReturnToMenu(){ 
+    setTimeout(() => {  //Wait before executing encapsulated code
+        rl.question("Do you want to return to the main menu? (y/n): ", menu => { //Read user input entered after prompt 
+          //Only one choice, text/input validation, transforms input to upper case
+          if(menu.toUpperCase() === "Y"){ 
+              console.clear();
+              DisplayMenu();
+          }
+          else if(menu.toUpperCase() === "N"){
+              Exit();
+          }
+          else{
+              console.clear();
+              //Prompt user to try again, text/input validation
+              console.log(`\"${menu}\" is not valid option...\nPlease enter either y or n.`); 
+              ReturnToMenu();
+          }
+        })
+        //Wait for 2 seconds before executing code 
+    }, 2000); 
+}
 
-//main menu selection switch/case in use below:
-const handleMenuSelection = (choice) => { //arrow function that stores the answer of the user in "(choice)"
-    switch (choice) { //switch statement with cases below
-      case '1':
-        console.log('You selected Option 1: Go to Twitter\n\n');
-        goToTwitter(); //run twitter function
-        break;
-      case '2':
-        console.log('You selected Option 2: Go to Spotify\n\n');
-        goToSpotify(); //run spotify function
-        break;
-      case '3':
-        console.log('Exiting the program...'); //to exit the program
-        setTimeout(() => { //timeout function to simulate a delay to show a process of being closed
-          read.close(); //closes the program
-          console.log('Program successfully closed.\n');
-        }, 3000); //will close after 3 seconds
-        return;
-      default: //default/error handling
-        console.log('Invalid choice, please select again.'); //error message
-        setTimeout(showMenu, 1000); //menu will be shown/displayed after 1 second to enable the user to try again
-        break;
-    }
-};
+//Main function to perform Spotify search capabilities
+async function SearchSongInSpotify() {
+  try {
+      //Wait for PromptUser to finish executing before continuing
+      let userCriteria = await PromptUser();
+      //Split the song and artist from the results
+      let song = userCriteria[0];
+      let artist = userCriteria[1];
 
-//twitter menu below:
-const handleTwitterMenuSelection = (choice) => {
-    switch (choice) {
-      case '1':
-        console.log('Returning to the welcoming menu...\n\n');
-        setTimeout(showMenu, 1000); //show main menu
-        break;
-      case '2':
-        console.log('Exiting the program...');
-        setTimeout(() => {
-          read.close();
-          console.log('Program successfully closed.\n\n');
-        }, 3000);
-        break;
-      default:
-        console.log('Invalid choice, please select again.\n\n'); //error handling
-        setTimeout(showTwitterMenu, 1000);
-        break;
-    }
-};
+      //Retrieve an access token with the credentials
+      let data = await spotify.clientCredentialsGrant();
+      //Store the access token so it may be used at a later stage
+      spotify.setAccessToken(data.body['access_token']);
 
-//spotify menu below:
-const handleSpotifyMenuSelection = (choice) => {
-    switch (choice) {
-      case '1':
-        console.log('Returning to the welcoming menu...\n');
-        setTimeout(showMenu, 1000); //show main menu
-        break;
-      case '2':
-        console.log('Exiting the program...');
-        setTimeout(() => {
-          read.close();
-          console.log('Program successfully closed.');
-        }, 3000);
-        break;
-      default:
-        console.log('Invalid choice, please select again.'); //error handling
-        setTimeout(showSpotifyMenu, 1000);
-        break;
-    }
-};
+      //Creating and using a query to search for the song on Spotify
+      const QUERY = `track:${song} artist:${artist}`;
+      let results = await spotify.searchTracks(QUERY);
 
-//navigating to the function to be run after selection was made
-const goToTwitter = () => {//takes the user to twitter option
-    console.log('Navigating to Twitter...\n\n'); //show processing message to remind user of their choice
-    setTimeout(() => {
-        console.log('Successfully navigated to Twitter.\n\n'); //display twitter information after 2 seconds
-        PrintLatestTweets(); //function called of tweets to be displayed
-        showTwitterMenu(); //display the menu navigation inside twitter
-    }, 2000); //will execute after 2 seconds
-};
-  
-const goToSpotify = () => { //takes the user to spotify option
-    console.log('Navigating to Spotify...\n\n');
-    setTimeout(() => {
-        console.log('Successfully navigated to Spotify.\n\n');
-        SearchSpotySong(); //function called of spotify to be displayed
-        showSpotifyMenu();
-    }, 2000);
-};
+      //Ensures that only exact matches of the song and artist is displayed to the user
+      let exactMatch = results.body.tracks.items.filter(track => 
+          track.name.toUpperCase() === song.toUpperCase() &&
+          track.artists.some(a => a.name.toUpperCase() === String(artist).toUpperCase())
+      );
+    
+      //Formats the data in an easily readable manner, displaying only the needed fields
+      let formattedResults = exactMatch.map(track => ({
+          Song: track.name,
+          Artist: track.artists.map(artist => artist.name).join(', '),
+          Album: track.album.name,
+          Preview: track.preview_url
+      }));
 
-//function to display Tweets from Twitter
-const PrintLatestTweets = () => {
-    console.log('\n\nPrinting latest tweets...');
-    // Add your code to print latest tweets here
-};
-  
-//function to search Spotify songs
-const SearchSpotySong = () => {
-    console.log('\n\nSearching for Spotify songs...');
-    // Add your code to search Spotify songs here
-};
+      //If the song was found, return a message and the results to the user
+      if(formattedResults.length > 0){
+          console.log(`\nMatches for the song was located in ${formattedResults.length} albums:`);
+          console.log(formattedResults);
+      }
+      //If the song was NOT found, return a message to the user
+      else{
+          console.log("\nThe song could not be found on Spotify. Please ensure that it is entered correctly.")
+      }
+  } 
+  catch (error) {
+      console.error('Error:', error.message);
+  }
+}
 
-showMenu();//placed here for code to be interpreted easier and ensures that all actions and functions takes place inside the menu
+//Prompt the user for the song and artist(s) names
+function PromptUser(){
+  return new Promise((resolve, reject) => {
+      let searchCriteria = []; 
 
+      //Prompt the user for the song name and add it to the array
+      rl.question("Please enter the song's name: ", song => {
+          searchCriteria.push(song);
+
+          //Prompt the user for the artist(s) name(s) and add it to the array
+          rl.question("Please enter the artist(s)'s name(s): ", artists => {
+              searchCriteria.push(artists);
+
+              //If both array elements are not blank, return the array
+              if (searchCriteria[0] !== "" && searchCriteria[1] !== "") {
+                  resolve(searchCriteria);
+              } 
+              //Otherwise, throw an error
+              else {
+                  reject(new Error("Please ensure that both the song and artist(s) are not blank."));
+              }
+          });
+      });
+  })
+}
+
+//Exiting the program and displaying a message to the user
+function Exit(){
+    console.clear();
+    console.log("Thank you for checking out our program! :)");
+    process.exit();
+}

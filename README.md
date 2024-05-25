@@ -17,9 +17,3 @@ The contributors:
   1) Annika Kritzinger: (Spotify API creation and menu assistance)
   2) Nathan Evans: (Menu creation, comments and overall assistance)
   3) Thabang Mahlangu: (Spotify API co-creation, comments and overall assistance)
-
- 
-
-
-
-
