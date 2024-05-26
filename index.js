@@ -128,6 +128,7 @@ async function SearchSongInSpotify() {
   } 
   catch (error) {
       console.error('Error:', error.message);
+      ReturnToMenu();
   }
 }
 
